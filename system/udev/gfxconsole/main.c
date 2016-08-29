@@ -857,6 +857,14 @@ static mx_protocol_device_t vc_root_proto = {
     .open = vc_root_open,
 };
 
+static mx_device_t *_the_display;
+static mx_display_protocol_t *_the_display_protocol;
+
+static void display_flush(uint starty, uint endy)
+{
+    _the_display_protocol->flush(_the_display);
+}
+
 static mx_status_t vc_root_bind(mx_driver_t* drv, mx_device_t* dev) {
     if (vc_initialized) {
         // disallow multiple instances
@@ -884,6 +892,12 @@ static mx_status_t vc_root_bind(mx_driver_t* drv, mx_device_t* dev) {
     // initialize the hw surface
     if ((status = gfx_init_surface(&hw_gfx, framebuffer, info.width, info.height, info.stride, info.format, 0)) < 0) {
         return status;
+    }
+
+    if (disp->flush) {
+        _the_display = dev;
+        _the_display_protocol = disp;
+        hw_gfx.flush = display_flush;
     }
 
     // publish the root vc device. opening this device will create a new vc

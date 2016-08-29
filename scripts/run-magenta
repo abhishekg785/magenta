@@ -109,31 +109,31 @@ if [ "$GRAPHICS" -eq 0 ]; then
     ARGS+=" -nographic"
 else
     ARGS+=" -serial stdio"
-    if [ "$ARCH" = "x86-64" ]; then
-        # Enable Bochs VBE device, which Magenta has a device for
-        ARGS+=" -vga std"
-    else
-        ARGS+=" -device virtio-gpu-device"
-    fi
+    #if [ "$ARCH" = "x86-64" ]; then
+    #    # Enable Bochs VBE device, which Magenta has a device for
+    #    ARGS+=" -vga std"
+    #fi
+
+    # also add a virtio gpu device, which we may implement
+    ARGS+=" -vga none"
+    ARGS+=" -device virtio-gpu-pci"
 fi
 
 if [ "$DISK" -eq 1 ]; then
     if [ "$ARCH" == "x86-64" ]; then
         # ahci
-        ARGS+=" -drive file=blk.bin,if=none,id=mydisk -device ich9-ahci,id=ahci -device ide-drive,drive=mydisk,bus=ahci.0"
+#ARGS+=" -drive file=blk.bin,if=none,id=mydisk -device ich9-ahci,id=ahci -device ide-drive,drive=mydisk,bus=ahci.0"
+        # virtio
+        ARGS+=" -drive file=blk.bin,format=raw,if=virtio,id=mydisk"
     else
-        # virtio based block device
-        ARGS+=" -drive if=none,file=blk.bin,id=blk,format=raw -device virtio-blk-device,drive=blk"
+        # virtio based block device, pci
+        ARGS+=" -drive file=blk.bin,format=raw,if=virtio,id=mydisk"
     fi
 fi
 
 if [ "$NET" -eq 1 ]; then
-    # virtio based network interface
-    if [ "$ARCH" == "x86-64" ]; then
-        ARGS+=" -netdev type=user,hostname=qemu,id=net0 -device virtio-net-pci,netdev=net0"
-    else
-        ARGS+=" -netdev user,id=vmnic,hostname=qemu -device virtio-net-device,netdev=vmnic"
-    fi
+    # virtio based network interface, pci
+    ARGS+=" -netdev type=user,hostname=qemu,id=net0 -device virtio-net-pci,netdev=net0"
 fi
 
 if [ "$NET" -eq 2 ]; then
@@ -144,8 +144,6 @@ if [ "$NET" -eq 2 ]; then
     fi
     if [ "$ARCH" == "x86-64" ]; then
         ARGS+=" -device e1000,netdev=net0"
-    else
-        ARGS+=" -device virtio-net-device,netdev=net0"
     fi
 fi
 
@@ -158,6 +156,11 @@ fi
 if [ "$SMP" -ne 1 ]; then
     ARGS+=" -smp $SMP"
 fi
+
+ARGS+=" -device virtio-serial-pci"
+ARGS+=" -device virtio-rng-pci"
+ARGS+=" -device virtio-mouse-pci"
+ARGS+=" -device virtio-keyboard-pci"
 
 case $ARCH in
     arm32)
