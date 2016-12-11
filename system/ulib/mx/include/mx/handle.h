@@ -106,7 +106,7 @@ public:
         return set_property(get(), property, value, size);
     }
 
-    explicit operator bool() const { return value_ != MX_HANDLE_INVALID; }
+    explicit operator bool() const { return value_ > 0; }
 
     mx_handle_t get() const { return value_; }
 
